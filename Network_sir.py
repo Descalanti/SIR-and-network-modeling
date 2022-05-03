@@ -54,13 +54,64 @@ def generate_graph( graph
 
   return SIR_results
 
-# Create four diffusion metrics
-# 1. SIR with scale free network
-# 2. SIR with small world network
 
+def sir_graph_metrics(sir_simulation):
+    metrics = pd.DataFrame(columns = [ 'Average Degree Centrality'     
+                                     , 'Average Betweenness Centrality'
+                                     , 'Average Local Efficiency'      
+                                     , 'Average Global Efficiency'
+                                     ])
+    
+    for key in sir_simulation.keys():
+        scale_free_graph = nx.Graph(sir_simulation[key].transmission_tree())
+
+        metrics.loc[key] = [ '{:05f}'.format(np.mean(list(nx.degree_centrality(scale_free_graph))))
+                           , '{:05f}'.format(np.mean(list(nx.betweenness_centrality(scale_free_graph))))
+                           , '{:05f}'.format(nx.local_efficiency(scale_free_graph))
+                           , '{:05f}'.format(nx.global_efficiency(scale_free_graph))
+                           ]
+    
+    return metrics
+
+#Generating graphs 
 SIR_scale_free  = generate_graph(nx.scale_free_graph)
 SIR_small_world = generate_graph(nx.watts_strogatz_graph)
 
-#plotting the scale-free and ebola simulation 
-SIR_scale_free['g_2.15'].display(time = 2)
-plt.show()
+#graphing scale free 
+animation = SIR_scale_free['g_2.15'].animate()
+animation.save('scale_free.mp4', fps=10, extra_args=['-vcodec', 'libx264'])
+
+#graphing small world 
+animation = SIR_small_world['g_0.041_2.15'].animate()
+animation.save('small_world.mp4', fps=10, extra_args=['-vcodec', 'libx264'])
+
+#scale free networks 
+scale_free_graph = nx.Graph(SIR_scale_free['g_2.15'].transmission_tree())
+
+metrics = { 'Average Degree Centrality'      : '{:05f}'.format(np.mean(list(nx.degree_centrality(scale_free_graph))))
+          , 'Average Betweenness Centrality' : '{:05f}'.format(np.mean(list(nx.betweenness_centrality(scale_free_graph))))
+          , 'Average Local Efficiency'       : '{:05f}'.format(nx.local_efficiency(scale_free_graph))
+          , 'Average Global Efficiency'      : '{:05f}'.format(nx.global_efficiency(scale_free_graph))
+          }
+
+metrics
+
+df_scale_free = sir_graph_metrics(SIR_scale_free)
+len(df_scale_free)
+display(df_scale_free)
+
+
+#small world metrics
+small_world_graph = nx.Graph(SIR_small_world['g_0.041_2.15'].transmission_tree())
+
+metrics = { 'Average Degree Centrality'      : '{:05f}'.format(np.mean(list(nx.degree_centrality(small_world_graph))))
+          , 'Average Betweenness Centrality' : '{:05f}'.format(np.mean(list(nx.betweenness_centrality(small_world_graph))))
+          , 'Average Local Efficiency'       : '{:05f}'.format(nx.local_efficiency(small_world_graph))
+          , 'Average Global Efficiency'      : '{:05f}'.format(nx.global_efficiency(small_world_graph))
+          }
+
+metrics
+
+df_small_world = sir_graph_metrics(SIR_small_world)
+len(df_small_world)
+display(df_small_world)
